@@ -7,40 +7,69 @@ namespace GSMC20240904.Endpoints
 
         // Lista estática en memoria para almacenar las bodegas
         static List<object> bodegas = new List<object>();
-    
+
         public static void AddBodegaEndpoints(this WebApplication app)
         {
-            // Endpoint privado para crear una nueva bodega
-            app.MapPost("/bodega/crear", [Authorize] (Guid id, string nombre, string ubicacion) =>
+            app.MapGet("/bodega", () =>
             {
-                // Agrega la nueva bodega con el ID proporcionado por el usuario
-                var nuevaBodega = new { Id = id, Nombre = nombre, Ubicacion = ubicacion };
-                bodegas.Add(nuevaBodega);
-                return Results.Ok(nuevaBodega);
-            }).RequireAuthorization();
-            // Endpoint privado para modificar una bodega existente
-            app.MapPut("/bodega/modificar", [Authorize] (Guid id, string nombre, string ubicacion) =>
-            {
-                var bodega = bodegas.FirstOrDefault(b => ((dynamic)b).Id == id);
-                if (bodega == null)
-                {
-                    return Results.NotFound("Bodega no encontrada.");
-                }
-
-                // Modificar los detalles de la bodega con el ID proporcionado por el usuario
-                ((dynamic)bodega).Nombre = nombre;
-                ((dynamic)bodega).Ubicacion = ubicacion;
-                return Results.Ok("Bodega modificada exitosamente.");
+                return bodegas;
             }).RequireAuthorization();
 
-            // Endpoint privado para obtener una bodega por su ID
-            app.MapGet("/bodega/{id}", [Authorize] (Guid id) =>
+            app.MapPost("/bodega", (int id, string nombre, string ubicacion) =>
             {
-                var bodega = bodegas.FirstOrDefault(b => ((dynamic)b).Id == id);
+                var bodega = new
+                {
+                    id,  // Usando el id proporcionado
+                    nombre,
+                    ubicacion
+                };
+                bodegas.Add(bodega);
+                return bodegas;
+            }).RequireAuthorization();
+
+            app.MapGet("/bodega/{id}", (int id) =>
+            {
+                var bodega = bodegas.FirstOrDefault(m => m.GetType().GetProperty("id")?.GetValue(m).Equals(id) == true);
                 if (bodega == null)
                 {
-                    return Results.NotFound("Bodega no encontrada.");
+                    return Results.NotFound();
                 }
+                return Results.Ok(bodega);
+            }).RequireAuthorization();
+            app.MapPut("/bodega/{id}", (int id, string nombre, string ubicacion) =>
+            {
+                var bodega = bodegas.FirstOrDefault(m => m.GetType().GetProperty("id")?.GetValue(m).Equals(id) == true);
+                if (bodega == null)
+                {
+                    return Results.NotFound();
+                }
+
+                // Crear una nueva bodega con los datos actualizados
+                var updatedBodega = new
+                {
+                    id,
+                    nombre,
+                    ubicacion
+                };
+
+                // Remover la bodega existente
+                bodegas.Remove(bodega);
+                // Añadir la bodega actualizada
+                bodegas.Add(updatedBodega);
+
+                return Results.Ok(updatedBodega);
+            }).RequireAuthorization();
+
+
+            app.MapDelete("/bodega/{id}", (int id) =>
+            {
+                var bodega = bodegas.FirstOrDefault(m => m.GetType().GetProperty("id")?.GetValue(m).Equals(id) == true);
+                if (bodega == null)
+                {
+                    return Results.NotFound();
+                }
+
+                bodegas.Remove(bodega);
                 return Results.Ok(bodega);
             }).RequireAuthorization();
         }

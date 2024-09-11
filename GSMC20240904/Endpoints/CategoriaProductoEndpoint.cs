@@ -16,7 +16,7 @@ namespace GSMC20240904.Endpoints
             });
 
             // Endpoint privado para registrar una nueva categoría
-            app.MapPost("/categorias", [Authorize] (Guid id, string nuevaCategoria) =>
+            app.MapPost("/categorias", [Authorize] (int id, string nuevaCategoria) =>
             {
                 // Agrega la nueva categoría con el ID proporcionado por el usuario
                 categorias.Add(new { Id = id, Nombre = nuevaCategoria });
